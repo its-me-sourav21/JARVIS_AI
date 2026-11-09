@@ -1,43 +1,72 @@
+from automation.command_handler import handle_command
 from voice.listener import listen
 from voice.speaker import speak
 from voice.wake_word import wait_for_wake_word
 from brain import ask_ai, clear_memory
 
 
-def main():
+def conversation_mode():
 
-    speak("Hello Bhai! Jarvis is ready.")
+    speak("Yes Bhai, I am listening.")
 
     while True:
 
-        # Wait for Hey Jarvis
-        wait_for_wake_word()
-
-        speak("Yes Bhai, I am listening.")
-
-        # Listen to user's command
         command = listen()
 
         if not command:
             continue
 
-        # Exit command
-        if command in ["exit", "stop jarvis", "shutdown jarvis"]:
-            speak("Goodbye Bhai!")
-            break
+        # Exit conversation mode
+        if any(word in command for word in [
+            "goodbye jarvis",
+            "sleep jarvis",
+            "go to sleep",
+            "stop listening"
+        ]):
+            speak("Okay Bhai. Going to sleep.")
+            return
 
         # Clear conversation memory
         if "clear memory" in command:
             clear_memory()
-            speak("Memory cleared.")
+            speak("Conversation memory cleared.")
             continue
 
-        # Ask Gemini AI
+        # Shutdown assistant
+        if any(word in command for word in [
+            "shutdown jarvis",
+            "exit jarvis",
+            "quit jarvis"
+        ]):
+            speak("Goodbye Bhai. Shutting down.")
+            raise SystemExit
+
+       # Check system commands first
+        response = handle_command(command)
+
+        if response:
+            speak(response)
+            continue
+
+        # Otherwise use Gemini AI
         print("JARVIS: Thinking...")
 
         response = ask_ai(command)
 
         speak(response)
+
+
+def main():
+
+    speak("Hello Bhai. All systems are ready.")
+
+    while True:
+
+        print("\nJARVIS: Sleeping. Say Hey Jarvis to activate.")
+
+        wait_for_wake_word()
+
+        conversation_mode()
 
 
 if __name__ == "__main__":
@@ -47,3 +76,4 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print("\nJARVIS stopped.")
+ 
